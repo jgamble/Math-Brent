@@ -1,0 +1,23 @@
+Announcing the release of Perl Module Math::Brent Version 0.01
+Uploaded to CPAN archives under my home directory.
+
+Math::Brent - One-Dimensional Function Minimisation
+	       using Brent's method
+
+This is an implementation of Brents method for One-Dimensional
+minimisation of a function without using derivatives. Using Perl makes
+it easy for that function to be the output of another program such as
+a simulator.
+
+This module requires Math::VecStat and Math::Fortran.
+
+Module Entry
+
+6) Data Types and Data Type Utilities (see also Database Interfaces)
+
+Name           DSLI  Description                                  Info
+-----------    ----  -------------------------------------------- -----
+Math::
+::Brent        Rdpr  One-dimensional Function Minimisation        JARW
+
+  JARW John A.R. Williams <J.A.R.Williams@aston.ac.uk>
