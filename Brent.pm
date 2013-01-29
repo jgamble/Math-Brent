@@ -6,9 +6,9 @@
 =head1 SYNOPSIS
 
     use Math::Brent qw(FindMinima BracketMinimum Brent Minimise1D);
-    my ($x,$y)=Minimise1D($guess,$scale,\&func,$tol,$itmax);
-    my ($ax,$bx,$cx,$fa,$fb,$fc)=BracketMinimum($ax,$bx,$cx,\&func);
-    my ($x,$y)=Brent($ax,$bx,$cx,\&func,$tol,$itmax);
+    my ($x, $y)=Minimise1D($guess, $scale, \&func, $tol, $itmax);
+    my ($ax, $bx, $cx, $fa, $fb, $fc)=BracketMinimum($ax, $bx, \&func);
+    my ($x, $y)=Brent($ax, $bx, $cx, \&func, $tol, $itmax);
 
 =head1 DESCRIPTION
 
