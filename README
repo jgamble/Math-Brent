@@ -1,17 +1,47 @@
-Perl Module Math::Brent - 0.01
+	Math-Brent, version 0.3, 12 May 2015
 
-     Copyright (c) 1995 John A.R. Williams. All rights reserved.
-     This program is free software; you can redistribute it and/or
-     modify it under the same terms as Perl itself.
+An implementation of Brent's method for one-dimensional minimisation
+of a function without using derivatives.
 
-To install, unzip and untar the archive. In the directory created type
+INSTALLATION
 
-perl Makefile.pl
-make install
+To install this module, run the following commands:
 
-Documentation is in the module file and will be added onto
-perllocal.pod as usual.
+	perl Build.PL
+	./Build
+	./Build test
+	./Build install
 
-This module requires Math::VecStat and Math::Fortran to be installed.
+SUPPORT AND DOCUMENTATION
 
-I can be contacted at <Email: J.A.R.Williams@aston.ac.uk>
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc Math::Brent
+
+You can also look for information at:
+
+    RT, CPAN's request tracker (report bugs here)
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Math-Brent
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/Math-Brent
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/Math-Brent
+
+    Search CPAN
+        http://search.cpan.org/dist/Math-Brent/
+
+
+LICENSE AND COPYRIGHT
+
+Copyright (C) 1995 J. A. R. Williams
+This module is currently maintained by John M. Gamble.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See L<http://dev.perl.org/licenses/> for more information.
+

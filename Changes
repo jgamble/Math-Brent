@@ -1,0 +1,15 @@
+Revision history for Math-Brent
+
+0.03
+	12 May 2015
+	- Get package up to more-or-less current standards using
+	  Module-Starter. Tests and documentation updates come
+	  with the next release.
+0.02
+	29 January 2013
+	- Fixed Bug #39753, error in the Synopsis of the documentation.
+	  (https://rt.cpan.org/Public/Bug/Display.html?id=39753)
+
+0.01    29 December 1995
+        First version by J. A. R. Williams
+
