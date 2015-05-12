@@ -1,5 +1,13 @@
-MANIFEST
+Build.PL
+Changes
+lib/Math/Brent.pm
+MANIFEST			This list of files
 README
-Release
+t/00-load.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
 Makefile.PL
-Brent.pm
+LICENSE
+META.yml
+META.json

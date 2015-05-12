@@ -1,0 +1,27 @@
+---
+abstract: 'Single Dimensional Function Minimisation'
+author:
+  - 'J. A. R. Williams'
+  - 'John M. Gamble <jgamble@cpan.org>'
+build_requires:
+  Test::More: '0'
+configure_requires:
+  Module::Build: '0'
+dynamic_config: 0
+generated_by: 'Module::Build version 0.4211, CPAN::Meta::Converter version 2.150001'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Math-Brent
+provides:
+  Math::Brent:
+    file: lib/Math/Brent.pm
+    version: '0.03'
+requires:
+  Math::Fortran: '0'
+  Math::VecStat: '0'
+  perl: v5.8.3
+resources:
+  license: http://dev.perl.org/licenses/
+version: '0.03'
