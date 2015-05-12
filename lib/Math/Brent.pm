@@ -6,6 +6,7 @@
 =head1 SYNOPSIS
 
     use Math::Brent qw(FindMinima BracketMinimum Brent Minimise1D);
+
     my ($x, $y)=Minimise1D($guess, $scale, \&func, $tol, $itmax);
     my ($ax, $bx, $cx, $fa, $fb, $fc)=BracketMinimum($ax, $bx, \&func);
     my ($x, $y)=Brent($ax, $bx, $cx, \&func, $tol, $itmax);
@@ -48,27 +49,22 @@ the abcissa of the minum and the function value there.
       my $x=shift ;
       return $x ? sin($x)/$x: 1;
     }
-   my ($x,$y)=Minimise1D(1,1,\&func,1e-7);
-   print "Minimum is func($x)=$y\n";
+    my ($x,$y)=Minimise1D(1,1,\&func,1e-7);
+    print "Minimum is func($x)=$y\n";
 
 produces the output
 
     Minimum is func(5.236068)=-.165388470697432
     
-=head1 HISTORY
-
-$Log: Brent.pm,v $
-Revision 1.1  1995/12/26 10:06:36  willijar
-Initial revision
-
-
 =head1 BUGS
 
 Let me know of any problems.
 
 =head1 AUTHOR
 
-John A.R. Williams <J.A.R.Williams@aston.ac.uk>
+John A.R. Williams B<J.A.R.Williams@aston.ac.uk>
+
+John M. Gamble B<jgamble@cpan.org> (current maintainer)
 
 =head1 SEE ALSO
 
@@ -87,7 +83,10 @@ use Math::Fortran qw(sign);
 use strict;
 use Carp;
 
-sub Minimise1D {
+our $VERSION = 0.03;
+
+sub Minimise1D
+{
     my ($guess,$scale,$func,$tol,$itmax)=@_;
     my ($a,$b,$c)=BracketMinimum($guess-$scale,$guess+$scale,$func);
     return Brent($a,$b,$c,$func,$tol,$itmax);
@@ -101,34 +100,45 @@ sub Minimise1D {
 # routine searches in the downhill direction and returns new points ax,
 # bx, cx which bracket the minimum. The function values at the 3 points
 # are returned in fa, fb, fc respectively.
+#
 my $GOLD=1.618034; # default magnification ratio for intervals
 my $GLIMIT=100.0; # Max magnification for parabolic fit step
 my $TINY=1E-20;
-sub BracketMinimum {
+
+sub BracketMinimum
+{
     my ($ax,$bx,$func)=@_;
     my ($fa,$fb)=(&$func($ax),&$func($bx));
     if ($fb>$fa) { my $t=$ax; $ax=$bx; $bx=$t; $t=$fa; $fa=$fb; $fb=$t; }
     my $cx=$bx+$GOLD*($bx-$ax);
     my $fc=&$func($cx);
-    while($fb >= $fc) {	# Loop here until we bracket
+
+	# Loop here until we bracket
+    while($fb >= $fc)
+    {
 	my $r=($bx-$ax)*($fb-$fc); # Compute U by parabolic extrapolation from
 	my $q=($bx-$cx)*($fb-$fa); # a,b,c. TINY used to prevent div by zero
 	my $u=$bx-(($bx-$cx)*$q-($bx-$ax)*$r)/
 	    (2.0*sign(max(abs($q-$r),$TINY),$q-$r));
 	my $ulim=$bx+$GLIMIT*($cx-$bx); # We won't go further than this
 	my $fu;
-	if (($bx-$u)*($u-$cx)>0.0) { # parabolic U between B & C - try it
+
+	# parabolic U between B & C - try it
+	if (($bx-$u)*($u-$cx)>0.0)
+	{
 	    $fu=&$func($u);
+
 	    if ($fu < $fc) { # Minimum between B & C
 		$ax=$bx; $fa=$fb; $bx=$u;  $fb=$fu; next;
 	    }
 	    elsif ($fu > $fb) { # Minimum between A & U
 		$cx=$u; $fc=$fu; next;
 	    }
+
 	    $u=$cx+$GOLD*($cx-$bx);
 	    $fu=&$func($u);
 	}
-	elsif (($cx-$u)*($u-$ulim)>0) { #p arabolic  fit between C and limit
+	elsif (($cx-$u)*($u-$ulim)>0) { # parabolic  fit between C and limit
 	    $fu=&$func($u);
 	    if ($fu < $fc) {
 		$bx=$cx; $cx=$u;
@@ -153,7 +163,8 @@ sub BracketMinimum {
 
 my $CGOLD=0.3819660;
 my $ZEPS=1e-10;
-sub Brent {
+sub Brent
+{
     my ($ax,$bx,$cx,$func,$tol,$ITMAX)=@_;
     if (!defined $ITMAX) { $ITMAX=100; }
     if (!defined $tol) { $tol=1e-8; }
@@ -164,12 +175,16 @@ sub Brent {
     $fx=$fw=$fv=&$func($x);
     my $e=0.0; # will be distance moved on the step before last
     my ($xm,$tol1,$tol2,$iter);
-    for($iter=0; $iter<$ITMAX; $iter++) {
+
+    for ($iter=0; $iter<$ITMAX; $iter++)
+    {
 	$xm=0.5*($a+$b);
 	$tol1=$tol*abs($x)+$ZEPS;
 	$tol2=2.0*$tol1;
+
 	if (abs($x-$xm) <= ($tol2-0.5*($b-$a))) { last; }
-	if (abs($e)>$tol1) {
+	if (abs($e)>$tol1)
+	{
 	    my $r=($x-$w)*($fx-$fv);
 	    my $q=($x-$v)*($fx-$fw);
 	    my $p=($x-$v)*$q-($x-$w)*$r;
@@ -212,7 +227,6 @@ sub Brent {
     if ($iter>=$ITMAX) { carp "Brent Exceed Maximum Iterations.\n"; }
     return ($x,$fx);
 }
-
 
 
 1;
