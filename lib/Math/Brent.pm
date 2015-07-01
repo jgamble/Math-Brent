@@ -7,9 +7,9 @@
 
     use Math::Brent qw(FindMinima BracketMinimum Brent Minimise1D);
 
-    my ($x, $y)=Minimise1D($guess, $scale, \&func, $tol, $itmax);
-    my ($ax, $bx, $cx, $fa, $fb, $fc)=BracketMinimum($ax, $bx, \&func);
-    my ($x, $y)=Brent($ax, $bx, $cx, \&func, $tol, $itmax);
+    my ($x, $y) = Minimise1D($guess, $scale, \&func, $tol, $itmax);
+    my ($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx, \&func);
+    my ($x, $y) = Brent($ax, $bx, $cx, \&func, $tol, $itmax);
 
 =head1 DESCRIPTION
 
@@ -46,15 +46,15 @@ the abcissa of the minum and the function value there.
 
     use Math::Brent qw(Minimise1D);
     sub func {
-      my $x=shift ;
+      my $x = shift ;
       return $x ? sin($x)/$x: 1;
     }
-    my ($x,$y)=Minimise1D(1,1,\&func,1e-7);
-    print "Minimum is func($x)=$y\n";
+    my ($x,$y) = Minimise1D(1,1,\&func,1e-7);
+    print "Minimum is func($x) = $y\n";
 
 produces the output
 
-    Minimum is func(5.236068)=-.165388470697432
+    Minimum is func(5.236068) = -.165388470697432
     
 =head1 BUGS
 
@@ -76,8 +76,8 @@ Cambridge University Press. ISBN 0 521 30811 9.
 
 require Exporter;
 package Math::Brent;
-@ISA=qw(Exporter);
-@EXPORT_OK=qw(FindMinima BracketMinimum Brent Minimise1D);
+@ISA = qw(Exporter);
+@EXPORT_OK = qw(FindMinima BracketMinimum Brent Minimise1D);
 use Math::VecStat qw(max min);
 use Math::Fortran qw(sign);
 use strict;
@@ -87,9 +87,10 @@ our $VERSION = 0.03;
 
 sub Minimise1D
 {
-    my ($guess,$scale,$func,$tol,$itmax)=@_;
-    my ($a,$b,$c)=BracketMinimum($guess-$scale,$guess+$scale,$func);
-    return Brent($a,$b,$c,$func,$tol,$itmax);
+    my ($guess, $scale, $func, $tol, $itmax) = @_;
+    my ($a, $b, $c) = BracketMinimum($guess-$scale, $guess+$scale, $func);
+
+    return Brent($a, $b, $c, $func, $tol, $itmax);
 }
 
 #----------------------------------------------------------------------
@@ -129,10 +130,12 @@ sub BracketMinimum
 	    $fu=&$func($u);
 
 	    if ($fu < $fc) { # Minimum between B & C
-		$ax=$bx; $fa=$fb; $bx=$u;  $fb=$fu; next;
+		$ax=$bx; $fa=$fb; $bx=$u;  $fb=$fu;
+		next;
 	    }
 	    elsif ($fu > $fb) { # Minimum between A & U
-		$cx=$u; $fc=$fu; next;
+		$cx=$u; $fc=$fu;
+		next;
 	    }
 
 	    $u=$cx+$GOLD*($cx-$bx);
@@ -182,8 +185,9 @@ sub Brent
 	$tol1=$tol*abs($x)+$ZEPS;
 	$tol2=2.0*$tol1;
 
-	if (abs($x-$xm) <= ($tol2-0.5*($b-$a))) { last; }
-	if (abs($e)>$tol1)
+	last if (abs($x-$xm) <= ($tol2-0.5*($b-$a)));
+
+	if (abs($e) > $tol1)
 	{
 	    my $r=($x-$w)*($fx-$fv);
 	    my $q=($x-$v)*($fx-$fw);
@@ -192,10 +196,12 @@ sub Brent
 	    $q=abs($q);
 	    my $etemp=$e;
 	    $e=$d;
+
 	    if ( (abs($p)>=abs(0.5*$q*$etemp)) ||
 		($p<=$q*($a-$x)) || ($p>=$q*($b-$x)) ) {
 		goto gsec;
 	    }
+
 	    # parabolic step OK here - take it
 	    $d=$p/$q; $u=$x+$d;
 	    if ( (($u-$a)<$tol2) || (($b-$u)<$tol2) ) {
