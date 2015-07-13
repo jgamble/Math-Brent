@@ -9,7 +9,7 @@ my $builder = Module::Build->new(
 	dist_abstract => 'Single Dimensional Function Minimisation',
 	dist_author   => [q{J. A. R. Williams},
 			q{John M. Gamble <jgamble@cpan.org>}],
-	dist_version => '0.03',
+	dist_version => '0.04',
 	dist_name => 'Math-Brent',
 
 	requires => {
