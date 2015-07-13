@@ -47,7 +47,7 @@ points.
 
 Provides a simple interface to the above
 two routines. Given a function B<\&func>, an initial guess for its
-minimum, and its scaling (B<$guess>,B<$scale>) this routine isolates
+minimum, and its scaling (B<$guess>, B<$scale>) this routine isolates
 the minimum to a fractional precision of about B<$tol> using Brent's
 method. A maximum number of iterations B<$itmax> may be specified for
 this search - it defaults to 100. It returns an array consisting of
@@ -113,7 +113,7 @@ our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 use Math::VecStat qw(max min);
 use Math::Fortran qw(sign);
@@ -122,7 +122,7 @@ use Carp;
 sub Minimise1D
 {
     my ($guess, $scale, $func, $tol, $itmax) = @_;
-    my ($a, $b, $c) = BracketMinimum($guess-$scale, $guess+$scale, $func);
+    my ($a, $b, $c) = BracketMinimum($guess - $scale, $guess + $scale, $func);
 
     return Brent($a, $b, $c, $func, $tol, $itmax);
 }
@@ -164,12 +164,13 @@ sub BracketMinimum
     {
 	#
 	# Compute U by parabolic extrapolation from
-	# a,b,c. TINY used to prevent div by zero
+	# a, b, c. TINY used to prevent div by zero
 	#
 	my $r = ($bx - $ax) * ($fb - $fc);
-	my $q = ($bx-$cx)*($fb-$fa);
-	my $u = $bx-(($bx-$cx)*$q-($bx-$ax)*$r)/
-	    (2.0*sign(max(abs($q-$r),$TINY),$q-$r));
+	my $q = ($bx - $cx) * ($fb - $fa);
+	my $u = $bx - (($bx - $cx) * $q - ($bx - $ax) * $r)/
+	    (2.0 * sign(max(abs($q - $r), $TINY), $q - $r));
+
 	my $ulim = $bx + $GLIMIT * ($cx - $bx); # We won't go further than this
 	my $fu;
 
@@ -210,7 +211,8 @@ sub BracketMinimum
 	elsif (($u - $ulim) * ($ulim - $cx) >= 0)
 	{
 	    # Limit parabolic U to maximum
-	    $u = $ulim; $fu = &$func($u);
+	    $u = $ulim;
+	    $fu = &$func($u);
 	}
 	else
 	{
@@ -232,26 +234,28 @@ my $ZEPS= 1e-10;
 
 sub Brent
 {
-    my ($ax, $bx, $cx, $func, $tol, $ITMAX)= @_;
+    my ($ax, $bx, $cx, $func, $tol, $ITMAX) = @_;
+    my ($d, $u, $x, $w, $v); # ordinates
+    my ($fu, $fx, $fw, $fv); # function evaluations
 
-    $ITMAX= 100 unless (defined $ITMAX);
+    $ITMAX = 100 unless (defined $ITMAX);
     $tol = 1e-8 unless (defined $tol);
 
     my $a = min($ax, $cx);
     my $b = max($ax, $cx);
-    my ($d,$u,$x,$w,$v,$fu,$fx,$fw,$fv); # ordinates & function evaluations
+
     $x = $w = $v = $bx;
     $fx = $fw = $fv = &$func($x);
     my $e = 0.0; # will be distance moved on the step before last
-    my ($xm, $tol1, $tol2, $iter);
+    my $iter = 0;
 
-    for ($iter = 0; $iter<$ITMAX; $iter++)
+    while ($iter < $ITMAX) 
     {
-	$xm = 0.5*($a+$b);
-	$tol1= $tol*abs($x)+$ZEPS;
-	$tol2= 2.0*$tol1;
+	my $xm = 0.5 * ($a + $b);
+	my $tol1 = $tol * abs($x) + $ZEPS;
+	my $tol2 = 2.0 * $tol1;
 
-	last if (abs($x-$xm) <= ($tol2-0.5*($b-$a)));
+	last if (abs($x - $xm) <= ($tol2 - 0.5 * ($b - $a)));
 
 	if (abs($e) > $tol1)
 	{
@@ -263,41 +267,75 @@ sub Brent
 	    my $etemp = $e;
 	    $e = $d;
 
-	    if ( (abs($p) >= abs(0.5*$q*$etemp)) ||
-		($p<= $q*($a-$x)) || ($p >= $q*($b-$x)) ) {
+	    if ( (abs($p) >= abs(0.5 * $q * $etemp)) ||
+		($p <= $q*($a - $x)) || ($p >= $q * ($b - $x)) )
+	    {
 		goto gsec;
 	    }
 
 	    # parabolic step OK here - take it
-	    $d = $p/$q; $u = $x+$d;
-	    if ( (($u-$a)<$tol2) || (($b-$u)<$tol2) ) {
-		$d = sign($tol1,$xm-$x);
+	    $d = $p/$q;
+	    $u = $x + $d;
+
+	    if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
+	    {
+		$d = sign($tol1, $xm - $x);
 	    }
 	    goto dcomp;
 	}
+
       gsec: # We arrive here for a Golden section step
-	$e = (($x >= $xm) ? $a : $b)-$x;
-	$d = $CGOLD*$e; # Golden section step
+	$e = (($x >= $xm) ? $a : $b) - $x;
+	$d = $CGOLD * $e; # Golden section step
+
       dcomp: # We arrive here with d from Golden section or parabolic step
-	$u = $x+( (abs($d) >= $tol1) ? $d : sign($tol1,$d));
+	$u = $x + ((abs($d) >= $tol1) ? $d : sign($tol1, $d));
 	$fu = &$func($u); # 1 &$function evaluation per iteration
-	if ($fu<= $fx) { # Decide what to do with &$function evaluation
-	    if ($u >= $x) { $a = $x; } else { $b = $x; }
+
+	#
+	# Decide what to do with &$function evaluation
+	#
+	if ($fu <= $fx)
+	{
+	    if ($u >= $x)
+	    {
+		    $a = $x;
+	    }
+	    else
+	    {
+		    $b = $x;
+	    }
 	    $v = $w; $fv = $fw;
 	    $w = $x; $fw = $fx;
 	    $x = $u; $fx = $fu;
 	}			
-	else {
-	    if ($u<$x) { $a = $u; } else { $b = $u; }
-	    if ($fu<= $fw || $w == $x) {
+	else
+	{
+	    if ($u < $x)
+	    {
+		    $a = $u;
+	    }
+	    else
+	    {
+		    $b = $u;
+	    }
+
+	    if ($fu <= $fw || $w == $x)
+	    {
 		$v = $w; $fv = $fw;
 		$w = $u; $fw = $fu;
 	    }
-	    elsif ( $fu<= $fv || $v == $x || $v == $w ) { $v = $u; $fv = $fu; }
+	    elsif ( $fu <= $fv || $v == $x || $v == $w )
+	    {
+		    $v = $u; $fv = $fu;
+	    }
 	}
+
+	$iter++;
     }
-    if ($iter >= $ITMAX) { carp "Brent Exceed Maximum Iterations.\n"; }
-    return ($x,$fx);
+
+    carp "Brent Exceed Maximum Iterations.\n" if ($iter >= $ITMAX);
+    return ($x, $fx);
 }
 
 
