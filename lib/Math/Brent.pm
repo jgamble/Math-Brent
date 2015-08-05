@@ -1,13 +1,17 @@
-# $Id: Brent.pm,v 1.1 1995/12/26 10:06:36 willijar Exp $ 
 =head1 NAME
 
-  Math::Brent - Single Dimensional Function Minimisation
+Math::Brent - Single Dimensional Function Minimisation
 
 =head1 SYNOPSIS
 
-    use Math::Brent qw(FindMinima BracketMinimum Brent Minimise1D);
+    use Math::Brent qw(Minimise1D);
 
     my ($x, $y) = Minimise1D($guess, $scale, \&func, $tol, $itmax);
+
+or
+
+    use Math::Brent qw(BracketMinimum Brent);
+
     my ($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx, \&func);
     my ($x, $y) = Brent($ax, $bx, $cx, \&func, $tol, $itmax);
 
@@ -23,35 +27,50 @@ interpolation.
 The functions may be imported by name, or by using the export
 tag "all".
 
+=head3 Minimise1D()
+
+Provides a simple interface to the L</BracketMinimum()> and L</Brent()>
+routines.
+
+Given a function, an initial guess for the function's
+minimum, and its scaling, this routine converges
+to the function's minimum using Brent's method.
+
+    ($x, $y) = Minimise1D($guess, $scale, \&func);
+
+The minimum is reached within a certain tolerance (defaulting 1e-7), and
+attempts to do so within a maximum number of iterations (defaulting to 100).
+You may override them by providing alternate values:
+
+    ($x, $y) = Minimise1D($guess, $scale, \&func, 1.5e-8, 120);
+
 =head3 Brent()
 
-Given a function reference B<\&func> and a
-bracketing triplet of abcissas B<$ax>, B<$bx>, B<$cx> (such that
-B<$bx> is between B<$ax> and B<$cx> and B<func($bx)> is less than both
-B<func($ax)> and B<func($cx)>), Brent() isolates the minimum to a fractional
-precision of about B<$tol> using Brent's method. A maximum number of
-iterations B<$itmax> may be specified for this search - it defaults to
-100. Returned is an array consisting of the abcissa of the minum and
-the function value there.
+Given a function and a triplet of abcissas B<$ax>, B<$bx>, B<$cx>, such that
+
+=over 4
+
+=item 1. B<$bx> is between B<$ax> and B<$cx>, and
+
+=item 2. B<func($bx)> is less than both B<func($ax)> and B<func($cx)>),
+
+=back
+
+Brent() isolates the minimum to a fractional precision of about B<$tol>
+using Brent's method.
+
+A maximum number of iterations B<$itmax> may be specified for this search - it
+defaults to 100. Returned is a list consisting of the abcissa of the minum
+and the function value there.
 
 =head3 BracketMinimum()
 
 Given a function reference B<\&func> and
 distinct initial points B<$ax> and B<$bx> searches in the downhill
 direction (defined by the function as evaluated at the initial points)
-and returns an array of the three points B<$ax>, B<$bx>, B<$cx> which
+and returns a list of the three points B<$ax>, B<$bx>, B<$cx> which
 bracket the minimum of the function and the function values at those
 points.
-
-=head3 Minimise1D()
-
-Provides a simple interface to the above
-two routines. Given a function B<\&func>, an initial guess for its
-minimum, and its scaling (B<$guess>, B<$scale>) this routine isolates
-the minimum to a fractional precision of about B<$tol> using Brent's
-method. A maximum number of iterations B<$itmax> may be specified for
-this search - it defaults to 100. It returns an array consisting of
-the abcissa of the minum and the function value there.
 
 =head1 EXAMPLE
 
@@ -63,11 +82,11 @@ the abcissa of the minum and the function value there.
     }
 
     my($x, $y) = Minimise1D(1, 1, \&sinc, 1e-7);
-    print "Minimum of sinc($x) = $y\n";
+    print "Minimum is at sinc($x) = $y\n";
 
 produces the output
 
-    Minimum is func(5.236068) = -.165388470697432
+    Minimum is at sinc(4.4934094397196) = -.217233628211222
 
 Anonymous subroutines may also be used as the function reference:
 
@@ -76,9 +95,10 @@ Anonymous subroutines may also be used as the function reference:
     my($x, $y) = Minimise1D(3, 1, $cubic_ref);
     print "Minimum of the cubic at $x = $y\n";
     
+
 =head1 BUGS
 
-Let me know of any problems.
+Please report any bugs or feature requests via Github's L<issues link|:q>
 
 =head1 AUTHOR
 
@@ -91,6 +111,8 @@ John M. Gamble B<jgamble@cpan.org> (current maintainer)
 "Numerical Recipies: The Art of Scientific Computing"
 W.H. Press, B.P. Flannery, S.A. Teukolsky, W.T. Vetterling.
 Cambridge University Press. ISBN 0 521 30811 9.
+
+Richard P. Brent, L<Algorithms for minimization without derivatives|http://www.worldcat.org/title/algorithms-for-minimization-without-derivatives/oclc/515987&referer=brief_results>
 
 =cut
 
@@ -138,9 +160,10 @@ sub Minimise1D
 # bx, cx which bracket the minimum. The function values at the 3 points
 # are returned in fa, fb, fc respectively.
 #
-my $GOLD= 1.618034; # default magnification ratio for intervals
-my $GLIMIT= 100.0; # Max magnification for parabolic fit step
-my $TINY= 1E-20;
+
+my $GOLD = 0.5 + sqrt(1.25); # Default magnification ratio for intervals is phi.
+my $GLIMIT = 100.0; # Max magnification for parabolic fit step
+my $TINY = 1E-20;
 
 sub BracketMinimum
 {
@@ -153,13 +176,14 @@ sub BracketMinimum
     #
     if ($fb > $fa)
     {
-	my $t = $ax; $ax = $bx; $bx = $t; $t = $fa; $fa = $fb; $fb = $t;
+	my $t = $ax; $ax = $bx; $bx = $t;
+	$t = $fa; $fa = $fb; $fb = $t;
     }
 
     my $cx = $bx + $GOLD * ($bx - $ax);
     my $fc = &$func($cx);
 
-	# Loop here until we bracket
+    # Loop here until we bracket
     while ($fb >= $fc)
     {
 	#
@@ -175,7 +199,7 @@ sub BracketMinimum
 	my $fu;
 
 	# parabolic U between B & C - try it
-	if (($bx-$u) * ($u-$cx) > 0.0)
+	if (($bx - $u) * ($u - $cx) > 0.0)
 	{
 	    $fu = &$func($u);
 
@@ -197,13 +221,13 @@ sub BracketMinimum
 	}
 	elsif (($cx - $u) * ($u - $ulim) > 0)
 	{
-		# parabolic  fit between C and limit
+	    # parabolic  fit between C and limit
 	    $fu = &$func($u);
 
 	    if ($fu < $fc)
 	    {
 		$bx = $cx; $cx = $u;
-		$u = $cx + $GOLD*($cx-$bx);
+		$u = $cx + $GOLD * ($cx - $bx);
 		$fb = $fc; $fc = $fu;
 		$fu = &$func($u);
 	    }
@@ -216,7 +240,7 @@ sub BracketMinimum
 	}
 	else
 	{
-	    # eject  parabolic U, use default magnification
+	    # eject parabolic U, use default magnification
 	    $u = $cx + $GOLD * ($cx - $bx);
 	    $fu = &$func($u);
 	}
@@ -229,8 +253,11 @@ sub BracketMinimum
     return ($ax, $bx, $cx, $fa, $fb, $fc);
 }
 
-my $CGOLD= 0.3819660;
-my $ZEPS= 1e-10;
+#
+# The complementary step is (3 - sqrt(5))/2, which resolves to 2 - phi.
+#
+my $CGOLD = 2 - $GOLD;
+my $ZEPS = 1e-10;
 
 sub Brent
 {
@@ -259,10 +286,12 @@ sub Brent
 
 	if (abs($e) > $tol1)
 	{
-	    my $r = ($x-$w)*($fx-$fv);
-	    my $q = ($x-$v)*($fx-$fw);
-	    my $p = ($x-$v)*$q-($x-$w)*$r;
-	    if (($q = 2*($q-$r)) > 0.0) { $p = -$p; }
+	    my $r = ($x-$w) * ($fx-$fv);
+	    my $q = ($x-$v) * ($fx-$fw);
+	    my $p = ($x-$v) * $q-($x-$w)*$r;
+
+	    $p = -$p if (($q = 2*($q-$r)) > 0.0);
+
 	    $q = abs($q);
 	    my $etemp = $e;
 	    $e = $d;
@@ -299,11 +328,11 @@ sub Brent
 	{
 	    if ($u >= $x)
 	    {
-		    $a = $x;
+                $a = $x;
 	    }
 	    else
 	    {
-		    $b = $x;
+                $b = $x;
 	    }
 	    $v = $w; $fv = $fw;
 	    $w = $x; $fw = $fx;
@@ -337,6 +366,5 @@ sub Brent
     carp "Brent Exceed Maximum Iterations.\n" if ($iter >= $ITMAX);
     return ($x, $fx);
 }
-
 
 1;
