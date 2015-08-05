@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use Math::Brent qw(Minimise1D);
 use strict;
@@ -42,5 +42,8 @@ ok(fltcmp($y, -25.75) == 0, "Anon sub 2, ($x, $y)");
 
 ($x, $y) = Minimise1D(0.5, 0.5, $eqn3);
 ok(fltcmp($y, 0.827184) == 0, "Anon sub 3, ($x, $y)");
+
+($x, $y) = Minimise1D(1, 1, \&sinc);
+ok(fltcmp($y, -0.21723363) == 0, "sinc(), ($x, $y)");
 
 1;
