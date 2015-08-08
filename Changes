@@ -1,5 +1,12 @@
 Revision history for Math-Brent
 
+0.4
+	7 Aug 2015
+	- De-Fortran some code, including the elimination of one
+	  of the goto statements.
+	- Add tests.
+	- Improve POD, add references (including a link to Professor
+	  Brent's web page).
 0.03
 	12 May 2015
 	- Get package up to more-or-less current standards using
