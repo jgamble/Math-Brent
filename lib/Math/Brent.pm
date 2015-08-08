@@ -94,7 +94,7 @@ Anonymous subroutines may also be used as the function reference:
 
     my($x, $y) = Minimise1D(3, 1, $cubic_ref);
     print "Minimum of the cubic at $x = $y\n";
-    
+
 
 =head1 BUGS
 
@@ -112,7 +112,10 @@ John M. Gamble B<jgamble@cpan.org> (current maintainer)
 W.H. Press, B.P. Flannery, S.A. Teukolsky, W.T. Vetterling.
 Cambridge University Press. ISBN 0 521 30811 9.
 
-Richard P. Brent, L<Algorithms for minimization without derivatives|http://www.worldcat.org/title/algorithms-for-minimization-without-derivatives/oclc/515987&referer=brief_results>
+Richard P. Brent, L<Algorithms for Minimization Without Derivatives|http://www.worldcat.org/title/algorithms-for-minimization-without-derivatives/oclc/515987&referer=brief_results>
+
+Professor (Emeritus) Richard Brent has a web page at
+L<http://maths-people.anu.edu.au/~brent/>
 
 =cut
 
@@ -149,7 +152,7 @@ sub Minimise1D
     return Brent($a, $b, $c, $func, $tol, $itmax);
 }
 
-#----------------------------------------------------------------------
+#
 # BracketMinimum
 #
 # BracketMinimum is MNBRAK minimum bracketing routine from section 10.1
@@ -198,7 +201,9 @@ sub BracketMinimum
 	my $ulim = $bx + $GLIMIT * ($cx - $bx); # We won't go further than this
 	my $fu;
 
-	# parabolic U between B & C - try it
+	#
+	# Parabolic U between B & C - try it
+	#
 	if (($bx - $u) * ($u - $cx) > 0.0)
 	{
 	    $fu = &$func($u);
@@ -276,7 +281,7 @@ sub Brent
     my $e = 0.0; # will be distance moved on the step before last
     my $iter = 0;
 
-    while ($iter < $ITMAX) 
+    while ($iter < $ITMAX)
     {
 	my $xm = 0.5 * ($a + $b);
 	my $tol1 = $tol * abs($x) + $ZEPS;
@@ -290,34 +295,39 @@ sub Brent
 	    my $q = ($x-$v) * ($fx-$fw);
 	    my $p = ($x-$v) * $q-($x-$w)*$r;
 
-	    $p = -$p if (($q = 2*($q-$r)) > 0.0);
+	    $p = -$p if (($q = 2 * ($q - $r)) > 0.0);
 
 	    $q = abs($q);
 	    my $etemp = $e;
 	    $e = $d;
 
-	    if ( (abs($p) >= abs(0.5 * $q * $etemp)) ||
-		($p <= $q*($a - $x)) || ($p >= $q * ($b - $x)) )
+	    unless ( (abs($p) >= abs(0.5 * $q * $etemp)) ||
+		($p <= $q * ($a - $x)) || ($p >= $q * ($b - $x)) )
 	    {
-		goto gsec;
-	    }
+                #
+	        # Parabolic step OK here - take it.
+                #
+	        $d = $p/$q;
+	        $u = $x + $d;
 
-	    # parabolic step OK here - take it
-	    $d = $p/$q;
-	    $u = $x + $d;
-
-	    if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
-	    {
-		$d = sign($tol1, $xm - $x);
+	        if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
+	        {
+		    $d = sign($tol1, $xm - $x);
+	        }
+	        goto dcomp; # Skip the golden section step.
 	    }
-	    goto dcomp;
 	}
 
-      gsec: # We arrive here for a Golden section step
+        #
+        # Golden section step.
+        #
 	$e = (($x >= $xm) ? $a : $b) - $x;
-	$d = $CGOLD * $e; # Golden section step
+	$d = $CGOLD * $e;
 
-      dcomp: # We arrive here with d from Golden section or parabolic step
+        #
+        # We arrive here with d from Golden section or parabolic step.
+        #
+        dcomp:
 	$u = $x + ((abs($d) >= $tol1) ? $d : sign($tol1, $d));
 	$fu = &$func($u); # 1 &$function evaluation per iteration
 
@@ -337,7 +347,7 @@ sub Brent
 	    $v = $w; $fv = $fw;
 	    $w = $x; $fw = $fx;
 	    $x = $u; $fx = $fu;
-	}			
+	}
 	else
 	{
 	    if ($u < $x)
