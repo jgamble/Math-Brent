@@ -123,7 +123,7 @@ package Math::Brent;
 
 use strict;
 use warnings;
-use 5.8.3;
+use 5.10.1;
 
 use Exporter;
 our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
@@ -138,10 +138,10 @@ our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
-our $VERSION = 0.04;
+our $VERSION = 0.05;
 
 use Math::VecStat qw(max min);
-use Math::Fortran qw(sign);
+use Math::Utils qw(:fortran);
 use Carp;
 
 sub Minimise1D
@@ -196,7 +196,7 @@ sub BracketMinimum
 	my $r = ($bx - $ax) * ($fb - $fc);
 	my $q = ($bx - $cx) * ($fb - $fa);
 	my $u = $bx - (($bx - $cx) * $q - ($bx - $ax) * $r)/
-	    (2.0 * sign(max(abs($q - $r), $TINY), $q - $r));
+	    (2.0 * copysign(max(abs($q - $r), $TINY), $q - $r));
 
 	my $ulim = $bx + $GLIMIT * ($cx - $bx); # We won't go further than this
 	my $fu;
@@ -270,8 +270,8 @@ sub Brent
     my ($d, $u, $x, $w, $v); # ordinates
     my ($fu, $fx, $fw, $fv); # function evaluations
 
-    $ITMAX = 100 unless (defined $ITMAX);
-    $tol = 1e-8 unless (defined $tol);
+    $ITMAX //= 100;
+    $tol //= 1e-8;
 
     my $a = min($ax, $cx);
     my $b = max($ax, $cx);
@@ -312,7 +312,7 @@ sub Brent
 
 	        if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
 	        {
-		    $d = sign($tol1, $xm - $x);
+		    $d = copysign($tol1, $xm - $x);
 	        }
 	        goto dcomp; # Skip the golden section step.
 	    }
@@ -328,7 +328,7 @@ sub Brent
         # We arrive here with d from Golden section or parabolic step.
         #
         dcomp:
-	$u = $x + ((abs($d) >= $tol1) ? $d : sign($tol1, $d));
+	$u = $x + ((abs($d) >= $tol1) ? $d : copysign($tol1, $d));
 	$fu = &$func($u); # 1 &$function evaluation per iteration
 
 	#
