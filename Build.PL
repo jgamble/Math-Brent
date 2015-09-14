@@ -9,12 +9,12 @@ my $builder = Module::Build->new(
 	dist_abstract => 'Single Dimensional Function Minimisation',
 	dist_author   => [q{J. A. R. Williams},
 			q{John M. Gamble <jgamble@cpan.org>}],
-	dist_version => '0.04',
+	dist_version => '0.05',
 	dist_name => 'Math-Brent',
 
 	requires => {
-		perl => '5.8.3',
-		'Math::Fortran' => 0,
+		perl => '5.10.1',
+		'Math::Utils' => 1.00,
 		'Math::VecStat' => 0
 	},
 
