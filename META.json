@@ -5,7 +5,7 @@
       "John M. Gamble <jgamble@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Build version 0.4203",
+   "generated_by" : "Module::Build version 0.4211",
    "license" : [
       "perl_5"
    ],
@@ -27,16 +27,16 @@
       },
       "runtime" : {
          "requires" : {
-            "Math::Fortran" : "0",
+            "Math::Utils" : "1",
             "Math::VecStat" : "0",
-            "perl" : "v5.8.3"
+            "perl" : "v5.10.1"
          }
       }
    },
    "provides" : {
       "Math::Brent" : {
          "file" : "lib/Math/Brent.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -45,5 +45,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.04"
+   "version" : "0.05"
 }
