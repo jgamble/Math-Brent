@@ -1,7 +1,14 @@
 Revision history for Math-Brent
 
+0.5
+	14 September 2015
+	- Replace Math::Fortran use with Math::Utils. Changed calls
+	  to Math::Fortran's sign() to Math::Utils's copysign().
+	- Upped the minimum perl version needed to 5.10.1. This
+	  also allows use of the //= operator.
+
 0.4
-	7 Aug 2015
+	7 August 2015
 	- De-Fortran some code, including the elimination of one
 	  of the goto statements.
 	- Add tests.
