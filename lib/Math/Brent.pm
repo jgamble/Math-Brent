@@ -377,4 +377,99 @@ sub Brent
     return ($x, $fx);
 }
 
+sub brentzero
+{
+	my($a, $b, $func, $tol, $ITMAX) = @_;
+	my $fa = &$func($a);
+	my $fb = &$func($b);
+	my $fc = $fb;
+
+	my($c, $d, $e);
+
+	for my $iter (0 .. $ITMAX)
+	{
+		#
+		# Adjust bounding interval $d.
+		#
+		if ($fb * $fc > 0.0)
+		{
+			$c = $a; $fc = $fc;
+			$e = $d = $b - $a;
+		}
+
+		if (abs($fc) < abs($fb))
+		{
+			($a, $b, $c) = ($b, $c, $a);
+			($fa, $fb, $fc) = ($fb, $fc, $fa);
+		}
+
+		#
+		# Convergence check.
+		#
+		my $xm = ($c - $b) * 0.5;
+		my $tol1 = 2.0 * $ZEPS * abs($b) + $tol * 0.5;
+		return $b if (abs($xm) <= $tol1 or $fb == 0.0);
+
+		if (abs($e) >= $tol1 and abs($fa) > abs($fb))
+		{
+			#
+			# Attempt inverse quadratic interpolation.
+			#
+			my($p, $q, $r);
+			my $s = $fb/$fa;
+
+			if ($a == $c)
+			{
+				$p = 2.0 * $xm * $s;
+				$q = 1.0 - $s;
+			}
+			else
+			{
+				$q = $fa/$fc;
+				$r = $fb/$fc;
+				$p = $s * (2.0 * $xm * $q * ($q - $r) -
+					($b - $a) * ($r - 1.0));
+				$q = ($q - 1.0) * ($r - 1.0) * ($s - 1.0);
+			}
+
+			#
+			# Check if in bounds.
+			#
+			$q = - $q if ($p > 0.0);
+			$p = abs($p);
+			my $min1 = 3.0 * $xm * $q - abs($tol1 * $q);
+			my $min2 = abs($e * $q);
+
+			if (2.0 * $p > min($min1, $min2))
+			{
+				$e = $d;
+				$d = $p/$q;
+			}
+			else
+			{
+				$d = $xm;
+				$e = $d;
+			}
+		}
+		else
+		{
+			$d = $xm;
+			$e = $d;
+		}
+
+		#
+		# Move last best guess to $a.
+		#
+		# $xm check had been for > 0, but the copysign() call
+		# works because we would have already returned if $xm
+		# was zero.
+		#
+		$a = $b;
+		$fa = $fb;
+		$b += (abs($d) > $tol1)? $d: copysign($tol1, $xm);
+		$fb = &$func($b);
+	}
+	carp "Exceded $ITER iterations.";
+}
+
 1;
