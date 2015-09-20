@@ -14,7 +14,7 @@ my $builder = Module::Build->new(
 
 	requires => {
 		perl => '5.10.1',
-		'Math::Utils' => 1.00,
+		'Math::Utils' => 1.06,
 		'Math::VecStat' => 0
 	},
 

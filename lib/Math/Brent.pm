@@ -130,9 +130,9 @@ our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
 @ISA = qw(Exporter);
 %EXPORT_TAGS = (
 	all => [qw(
-		FindMinima
 		BracketMinimum
 		Brent Minimise1D
+		Brentzero
 	) ],
 );
 
@@ -143,6 +143,7 @@ our $VERSION = 0.05;
 use Math::VecStat qw(max min);
 use Math::Utils qw(:fortran);
 use Carp;
+#use Smart::Comments ('###', '####');  # 3 for variables, 4 for 'here we are'.
 
 sub Minimise1D
 {
@@ -158,7 +159,7 @@ sub Minimise1D
 # BracketMinimum is MNBRAK minimum bracketing routine from section 10.1
 # of Numerical Recipies
 #
-# Given a function func, and distinct initial points ax & bx this
+# Given a function func, and distinct initial points ax and bx, this
 # routine searches in the downhill direction and returns new points ax,
 # bx, cx which bracket the minimum. The function values at the 3 points
 # are returned in fa, fb, fc respectively.
@@ -186,7 +187,9 @@ sub BracketMinimum
     my $cx = $bx + $GOLD * ($bx - $ax);
     my $fc = &$func($cx);
 
+    #
     # Loop here until we bracket
+    #
     while ($fb >= $fc)
     {
 	#
@@ -202,7 +205,7 @@ sub BracketMinimum
 	my $fu;
 
 	#
-	# Parabolic U between B & C - try it
+	# Parabolic U between B and C - try it.
 	#
 	if (($bx - $u) * ($u - $cx) > 0.0)
 	{
@@ -210,13 +213,13 @@ sub BracketMinimum
 
 	    if ($fu < $fc)
 	    {
-		# Minimum between B & C
+		# Minimum between B and C
 		$ax = $bx; $fa = $fb; $bx = $u;  $fb = $fu;
 		next;
 	    }
 	    elsif ($fu > $fb)
 	    {
-		# Minimum between A & U
+		# Minimum between A and U
 		$cx = $u; $fc = $fu;
 		next;
 	    }
@@ -250,7 +253,7 @@ sub BracketMinimum
 	    $fu = &$func($u);
 	}
 
-	# Eliminate oldest point & continue
+	# Eliminate oldest point and continue
 	$ax = $bx; $bx = $cx; $cx = $u;
 	$fa = $fb; $fb = $fc; $fc = $fu;
     }
@@ -301,8 +304,8 @@ sub Brent
 	    my $etemp = $e;
 	    $e = $d;
 
-	    unless ( (abs($p) >= abs(0.5 * $q * $etemp)) ||
-		($p <= $q * ($a - $x)) || ($p >= $q * ($b - $x)) )
+	    unless ( (abs($p) >= abs(0.5 * $q * $etemp)) or
+		($p <= $q * ($a - $x)) or ($p >= $q * ($b - $x)) )
 	    {
                 #
 	        # Parabolic step OK here - take it.
@@ -310,7 +313,7 @@ sub Brent
 	        $d = $p/$q;
 	        $u = $x + $d;
 
-	        if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
+	        if ( (($u - $a) < $tol2) or (($b - $u) < $tol2) )
 	        {
 		    $d = copysign($tol1, $xm - $x);
 	        }
@@ -359,12 +362,12 @@ sub Brent
 		    $b = $u;
 	    }
 
-	    if ($fu <= $fw || $w == $x)
+	    if ($fu <= $fw or $w == $x)
 	    {
 		$v = $w; $fv = $fw;
 		$w = $u; $fw = $fu;
 	    }
-	    elsif ( $fu <= $fv || $v == $x || $v == $w )
+	    elsif ( $fu <= $fv or $v == $x or $v == $w )
 	    {
 		    $v = $u; $fv = $fu;
 	    }
@@ -377,37 +380,73 @@ sub Brent
     return ($x, $fx);
 }
 
-sub brentzero
+sub Brentzero
 {
 	my($a, $b, $func, $tol, $ITMAX) = @_;
 	my $fa = &$func($a);
 	my $fb = &$func($b);
-	my $fc = $fb;
 
-	my($c, $d, $e);
+	if ($fa * $fb > 0.0)
+	{
+		carp "Brentzero(): root was not bracketed by [$a, $b].";
+		return undef;
+	}
 
-	for my $iter (0 .. $ITMAX)
+	$ITMAX //= 100;
+	$tol //= 1e-8;
+
+	my($c, $fc) = ($b, $fb);
+	my($d, $e);
+	my $iter = 0;
+
+	while ($iter < $ITMAX)
 	{
 		#
 		# Adjust bounding interval $d.
 		#
-		if ($fb * $fc > 0.0)
+		### iteration: $iter
+		### a: $a
+		### b: $b
+		### fa: $fa
+		### fb: $fb
+		### fc: $fc
+		#
+		if (($fb > 0.0 and $fc > 0.0) or ($fb < 0.0 and $fc < 0.0))
 		{
-			$c = $a; $fc = $fc;
-			$e = $d = $b - $a;
+			$fc = $fa;
+			$c = $a;
+			$d = $b - $a;
+			$e = $d;
 		}
 
 		if (abs($fc) < abs($fb))
 		{
-			($a, $b, $c) = ($b, $c, $a);
-			($fa, $fb, $fc) = ($fb, $fc, $fa);
+			$a = $b;
+			$b = $c;
+			$c = $a;
+			$fa = $fb;
+			$fb = $fc;
+			$fc = $fa;
 		}
 
 		#
 		# Convergence check.
 		#
+		### a: $a
+		### b: $b
+		### c: $c
+		### d: $d
+		### fa: $fa
+		### fb: $fb
+		### fc: $fc
+		#
 		my $xm = ($c - $b) * 0.5;
-		my $tol1 = 2.0 * $ZEPS * abs($b) + $tol * 0.5;
+		my $tol1 = 2.0 * $ZEPS * abs($b) + ($tol * 0.5);
+
+		#
+		### tol1: $tol1
+		### xm: $xm
+		#
 		return $b if (abs($xm) <= $tol1 or $fb == 0.0);
 
 		if (abs($e) >= $tol1 and abs($fa) > abs($fb))
@@ -415,18 +454,22 @@ sub brentzero
 			#
 			# Attempt inverse quadratic interpolation.
 			#
-			my($p, $q, $r);
+			#### Branch (abs(e) >= tol1 and abs(fa) > abs(fb))
+			#
+			my($p, $q);
 			my $s = $fb/$fa;
 
 			if ($a == $c)
 			{
+				#### Branch (a == c)
 				$p = 2.0 * $xm * $s;
 				$q = 1.0 - $s;
 			}
 			else
 			{
+				#### Branch (a != c)
+				my $r = $fb/$fc;
 				$q = $fa/$fc;
-				$r = $fb/$fc;
 				$p = $s * (2.0 * $xm * $q * ($q - $r) -
 					($b - $a) * ($r - 1.0));
 				$q = ($q - 1.0) * ($r - 1.0) * ($s - 1.0);
@@ -435,24 +478,43 @@ sub brentzero
 			#
 			# Check if in bounds.
 			#
+			### q: $q
+			### p: $p
+			### s: $s
+			### e: $e
+			#
 			$q = - $q if ($p > 0.0);
 			$p = abs($p);
 			my $min1 = 3.0 * $xm * $q - abs($tol1 * $q);
 			my $min2 = abs($e * $q);
 
-			if (2.0 * $p > min($min1, $min2))
+			if (2.0 * $p < min($min1, $min2))
 			{
+				#
+				# Interpolation worked, use it.
+				#
+				#### Branch (2.0 * p < min(min1, min2))
+				#
 				$e = $d;
 				$d = $p/$q;
 			}
 			else
 			{
+				#
+				# Interpolation failed, use bisection.
+				#
+				#### Branch (2.0 * p >= min(min1, min2))
+				#
 				$d = $xm;
 				$e = $d;
 			}
 		}
 		else
 		{
+			#
+			# Bounds decreasing too slowly for
+			# quadratic interpolation, use bisection.
+			#
 			$d = $xm;
 			$e = $d;
 		}
@@ -460,16 +522,19 @@ sub brentzero
 		#
 		# Move last best guess to $a.
 		#
-		# $xm check had been for > 0, but the copysign() call
-		# works because we would have already returned if $xm
-		# was zero.
-		#
 		$a = $b;
 		$fa = $fb;
+
+		#
+		# Calculate the next guess.
+		#
 		$b += (abs($d) > $tol1)? $d: copysign($tol1, $xm);
 		$fb = &$func($b);
+		$iter++;
 	}
-	carp "Exceded $ITER iterations.";
+
+	carp "Brentzero Exceed Maximum Iterations.\n" if ($iter >= $ITMAX);
+	return $a;
 }
 
 1;
