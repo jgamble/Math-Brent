@@ -1,31 +1,101 @@
+package Math::Brent;
+
+use 5.010001;
+use strict;
+use warnings;
+
+use Exporter;
+our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
+@ISA = qw(Exporter);
+%EXPORT_TAGS = (
+	all => [qw(
+		BracketMinimum
+		Brent Minimise1D
+		Brentzero
+	) ],
+);
+
+@EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
+
+our $VERSION = 0.05;
+
+use Math::VecStat qw(max min);
+use Math::Utils qw(:fortran);
+use Carp;
+#use Smart::Comments ('###', '####');  # 3 for variables, 4 for 'here we are'.
+
 =head1 NAME
 
-Math::Brent - Single Dimensional Function Minimisation
+Math::Brent - Brent's Single Dimensional Function Minimisation, and Brent's zero finder.
 
 =head1 SYNOPSIS
 
     use Math::Brent qw(Minimise1D);
 
-    my ($x, $y) = Minimise1D($guess, $scale, \&func, $tol, $itmax);
+    my $tolerance = 1e-7;
+    my $itmax = 80;
+
+    sub sinc {
+      my $x = shift ;
+      return $x ? sin($x)/$x: 1;
+    }
+
+    my($x, $y) = Minimise1D(1, 1, \&sinc, $tolerance, $itmax);
+
+    print "Minimum is at sinc($x) = $y\n";
 
 or
 
     use Math::Brent qw(BracketMinimum Brent);
 
-    my ($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx, \&func);
-    my ($x, $y) = Brent($ax, $bx, $cx, \&func, $tol, $itmax);
+    #
+    # If for some reason you want to use the separate function
+    # calls instead of one call to Minimise1D()
+    #
+    my($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx, \&sinc);
+    my($x, $y) = Brent($ax, $bx, $cx, \&sinc, $tolerance, $itmax);
 
-=head1 DESCRIPTION
+    print "Minimum is at sinc($x) = $y\n";
 
-This is an implementation of Brent's method for One-Dimensional
+In either case the output will be C<Minimum is at sinc(4.4934094397196) = -.217233628211222>
+
+This module has implementations of Brent's method for one-dimensional
 minimisation of a function without using derivatives. This algorithm
 cleverly uses both the Golden Section Search and parabolic
 interpolation.
+
+Anonymous subroutines may also be used as the function reference:
+
+    my $cubic_ref = sub {my($x) = @_; return 6.25 + $x*$x*(-24 + $x*8));};
+
+    my($x, $y) = Minimise1D(3, 1, $cubic_ref);
+    print "Minimum of the cubic at $x = $y\n";
+
+In addition to finding the minimum, there is also an implementation of
+Brent's Method, used to find a function's root without using derivatives.
+
+    sub wobble
+    {
+        my($t) = @_;
+        return $t - cos($t);
+    }
+
+    #
+    # Find the zero between .5 and 1.
+    #
+    $r = Brentzero(0.5, 1.0, \&wobble, $tolerance, $itmax);
+
+
+=head1 EXPORT
+
+Each function can be exported by name, or all may be exported by using the tag 'all'.
 
 =head2 FUNCTIONS
 
 The functions may be imported by name, or by using the export
 tag "all".
+
+=cut
 
 =head3 Minimise1D()
 
@@ -44,105 +114,7 @@ You may override them by providing alternate values:
 
     ($x, $y) = Minimise1D($guess, $scale, \&func, 1.5e-8, 120);
 
-=head3 Brent()
-
-Given a function and a triplet of abcissas B<$ax>, B<$bx>, B<$cx>, such that
-
-=over 4
-
-=item 1. B<$bx> is between B<$ax> and B<$cx>, and
-
-=item 2. B<func($bx)> is less than both B<func($ax)> and B<func($cx)>),
-
-=back
-
-Brent() isolates the minimum to a fractional precision of about B<$tol>
-using Brent's method.
-
-A maximum number of iterations B<$itmax> may be specified for this search - it
-defaults to 100. Returned is a list consisting of the abcissa of the minum
-and the function value there.
-
-=head3 BracketMinimum()
-
-Given a function reference B<\&func> and
-distinct initial points B<$ax> and B<$bx> searches in the downhill
-direction (defined by the function as evaluated at the initial points)
-and returns a list of the three points B<$ax>, B<$bx>, B<$cx> which
-bracket the minimum of the function and the function values at those
-points.
-
-=head1 EXAMPLE
-
-    use Math::Brent qw(Minimise1D);
-
-    sub sinc {
-      my $x = shift ;
-      return $x ? sin($x)/$x: 1;
-    }
-
-    my($x, $y) = Minimise1D(1, 1, \&sinc, 1e-7);
-    print "Minimum is at sinc($x) = $y\n";
-
-produces the output
-
-    Minimum is at sinc(4.4934094397196) = -.217233628211222
-
-Anonymous subroutines may also be used as the function reference:
-
-    my $cubic_ref = sub {my($x) = @_; return 6.25 + $x*$x*(-24 + $x*8));};
-
-    my($x, $y) = Minimise1D(3, 1, $cubic_ref);
-    print "Minimum of the cubic at $x = $y\n";
-
-
-=head1 BUGS
-
-Please report any bugs or feature requests via Github's L<issues link|:q>
-
-=head1 AUTHOR
-
-John A.R. Williams B<J.A.R.Williams@aston.ac.uk>
-
-John M. Gamble B<jgamble@cpan.org> (current maintainer)
-
-=head1 SEE ALSO
-
-"Numerical Recipies: The Art of Scientific Computing"
-W.H. Press, B.P. Flannery, S.A. Teukolsky, W.T. Vetterling.
-Cambridge University Press. ISBN 0 521 30811 9.
-
-Richard P. Brent, L<Algorithms for Minimization Without Derivatives|http://www.worldcat.org/title/algorithms-for-minimization-without-derivatives/oclc/515987&referer=brief_results>
-
-Professor (Emeritus) Richard Brent has a web page at
-L<http://maths-people.anu.edu.au/~brent/>
-
 =cut
-
-package Math::Brent;
-
-use strict;
-use warnings;
-use 5.10.1;
-
-use Exporter;
-our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
-@ISA = qw(Exporter);
-%EXPORT_TAGS = (
-	all => [qw(
-		FindMinima
-		BracketMinimum
-		Brent Minimise1D
-	) ],
-);
-
-@EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
-
-our $VERSION = 0.05;
-
-use Math::VecStat qw(max min);
-use Math::Utils qw(:fortran);
-use Carp;
 
 sub Minimise1D
 {
@@ -158,15 +130,22 @@ sub Minimise1D
 # BracketMinimum is MNBRAK minimum bracketing routine from section 10.1
 # of Numerical Recipies
 #
-# Given a function func, and distinct initial points ax & bx this
-# routine searches in the downhill direction and returns new points ax,
-# bx, cx which bracket the minimum. The function values at the 3 points
-# are returned in fa, fb, fc respectively.
-#
 
 my $GOLD = 0.5 + sqrt(1.25); # Default magnification ratio for intervals is phi.
 my $GLIMIT = 100.0; # Max magnification for parabolic fit step
 my $TINY = 1E-20;
+
+=head3 BracketMinimum()
+
+    ($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx);
+
+Given a function reference B<\&func> and distinct initial points B<$ax>
+and B<$bx>, this routine searches in the downhill direction and returns
+a list of the three points B<$ax>, B<$bx>, B<$cx> which bracket the
+minimum of the function, along with the function values at those three
+points, $fa, $fb, $fc.
+
+=cut
 
 sub BracketMinimum
 {
@@ -186,7 +165,9 @@ sub BracketMinimum
     my $cx = $bx + $GOLD * ($bx - $ax);
     my $fc = &$func($cx);
 
+    #
     # Loop here until we bracket
+    #
     while ($fb >= $fc)
     {
 	#
@@ -202,7 +183,7 @@ sub BracketMinimum
 	my $fu;
 
 	#
-	# Parabolic U between B & C - try it
+	# Parabolic U between B and C - try it.
 	#
 	if (($bx - $u) * ($u - $cx) > 0.0)
 	{
@@ -210,13 +191,13 @@ sub BracketMinimum
 
 	    if ($fu < $fc)
 	    {
-		# Minimum between B & C
+		# Minimum between B and C
 		$ax = $bx; $fa = $fb; $bx = $u;  $fb = $fu;
 		next;
 	    }
 	    elsif ($fu > $fb)
 	    {
-		# Minimum between A & U
+		# Minimum between A and U
 		$cx = $u; $fc = $fu;
 		next;
 	    }
@@ -250,7 +231,7 @@ sub BracketMinimum
 	    $fu = &$func($u);
 	}
 
-	# Eliminate oldest point & continue
+	# Eliminate oldest point and continue
 	$ax = $bx; $bx = $cx; $cx = $u;
 	$fa = $fb; $fb = $fc; $fc = $fu;
     }
@@ -263,6 +244,27 @@ sub BracketMinimum
 #
 my $CGOLD = 2 - $GOLD;
 my $ZEPS = 1e-10;
+
+=head3 Brent()
+
+Given a function and a triplet of abcissas B<$ax>, B<$bx>, B<$cx>, such that
+
+=over 4
+
+=item 1. B<$bx> is between B<$ax> and B<$cx>, and
+
+=item 2. B<func($bx)> is less than both B<func($ax)> and B<func($cx)>),
+
+=back
+
+Brent() isolates the minimum to a fractional precision of about B<$tol>
+using Brent's method.
+
+A maximum number of iterations B<$itmax> may be specified for this search - it
+defaults to 100. Returned is a list consisting of the abcissa of the minum
+and the function value there.
+
+=cut
 
 sub Brent
 {
@@ -301,8 +303,8 @@ sub Brent
 	    my $etemp = $e;
 	    $e = $d;
 
-	    unless ( (abs($p) >= abs(0.5 * $q * $etemp)) ||
-		($p <= $q * ($a - $x)) || ($p >= $q * ($b - $x)) )
+	    unless ( (abs($p) >= abs(0.5 * $q * $etemp)) or
+		($p <= $q * ($a - $x)) or ($p >= $q * ($b - $x)) )
 	    {
                 #
 	        # Parabolic step OK here - take it.
@@ -310,7 +312,7 @@ sub Brent
 	        $d = $p/$q;
 	        $u = $x + $d;
 
-	        if ( (($u - $a) < $tol2) || (($b - $u) < $tol2) )
+	        if ( (($u - $a) < $tol2) or (($b - $u) < $tol2) )
 	        {
 		    $d = copysign($tol1, $xm - $x);
 	        }
@@ -359,12 +361,12 @@ sub Brent
 		    $b = $u;
 	    }
 
-	    if ($fu <= $fw || $w == $x)
+	    if ($fu <= $fw or $w == $x)
 	    {
 		$v = $w; $fv = $fw;
 		$w = $u; $fw = $fu;
 	    }
-	    elsif ( $fu <= $fv || $v == $x || $v == $w )
+	    elsif ( $fu <= $fv or $v == $x or $v == $w )
 	    {
 		    $v = $u; $fv = $fu;
 	    }
@@ -377,37 +379,73 @@ sub Brent
     return ($x, $fx);
 }
 
-sub brentzero
+sub Brentzero
 {
 	my($a, $b, $func, $tol, $ITMAX) = @_;
 	my $fa = &$func($a);
 	my $fb = &$func($b);
-	my $fc = $fb;
 
-	my($c, $d, $e);
+	if ($fa * $fb > 0.0)
+	{
+		carp "Brentzero(): root was not bracketed by [$a, $b].";
+		return undef;
+	}
 
-	for my $iter (0 .. $ITMAX)
+	$ITMAX //= 100;
+	$tol //= 1e-8;
+
+	my($c, $fc) = ($b, $fb);
+	my($d, $e);
+	my $iter = 0;
+
+	while ($iter < $ITMAX)
 	{
 		#
 		# Adjust bounding interval $d.
 		#
-		if ($fb * $fc > 0.0)
+		### iteration: $iter
+		### a: $a
+		### b: $b
+		### fa: $fa
+		### fb: $fb
+		### fc: $fc
+		#
+		if (($fb > 0.0 and $fc > 0.0) or ($fb < 0.0 and $fc < 0.0))
 		{
-			$c = $a; $fc = $fc;
-			$e = $d = $b - $a;
+			$fc = $fa;
+			$c = $a;
+			$d = $b - $a;
+			$e = $d;
 		}
 
 		if (abs($fc) < abs($fb))
 		{
-			($a, $b, $c) = ($b, $c, $a);
-			($fa, $fb, $fc) = ($fb, $fc, $fa);
+			$a = $b;
+			$b = $c;
+			$c = $a;
+			$fa = $fb;
+			$fb = $fc;
+			$fc = $fa;
 		}
 
 		#
 		# Convergence check.
 		#
+		### a: $a
+		### b: $b
+		### c: $c
+		### d: $d
+		### fa: $fa
+		### fb: $fb
+		### fc: $fc
+		#
 		my $xm = ($c - $b) * 0.5;
-		my $tol1 = 2.0 * $ZEPS * abs($b) + $tol * 0.5;
+		my $tol1 = 2.0 * $ZEPS * abs($b) + ($tol * 0.5);
+
+		#
+		### tol1: $tol1
+		### xm: $xm
+		#
 		return $b if (abs($xm) <= $tol1 or $fb == 0.0);
 
 		if (abs($e) >= $tol1 and abs($fa) > abs($fb))
@@ -415,18 +453,22 @@ sub brentzero
 			#
 			# Attempt inverse quadratic interpolation.
 			#
-			my($p, $q, $r);
+			#### Branch (abs(e) >= tol1 and abs(fa) > abs(fb))
+			#
+			my($p, $q);
 			my $s = $fb/$fa;
 
 			if ($a == $c)
 			{
+				#### Branch (a == c)
 				$p = 2.0 * $xm * $s;
 				$q = 1.0 - $s;
 			}
 			else
 			{
+				#### Branch (a != c)
+				my $r = $fb/$fc;
 				$q = $fa/$fc;
-				$r = $fb/$fc;
 				$p = $s * (2.0 * $xm * $q * ($q - $r) -
 					($b - $a) * ($r - 1.0));
 				$q = ($q - 1.0) * ($r - 1.0) * ($s - 1.0);
@@ -435,24 +477,43 @@ sub brentzero
 			#
 			# Check if in bounds.
 			#
+			### q: $q
+			### p: $p
+			### s: $s
+			### e: $e
+			#
 			$q = - $q if ($p > 0.0);
 			$p = abs($p);
 			my $min1 = 3.0 * $xm * $q - abs($tol1 * $q);
 			my $min2 = abs($e * $q);
 
-			if (2.0 * $p > min($min1, $min2))
+			if (2.0 * $p < min($min1, $min2))
 			{
+				#
+				# Interpolation worked, use it.
+				#
+				#### Branch (2.0 * p < min(min1, min2))
+				#
 				$e = $d;
 				$d = $p/$q;
 			}
 			else
 			{
+				#
+				# Interpolation failed, use bisection.
+				#
+				#### Branch (2.0 * p >= min(min1, min2))
+				#
 				$d = $xm;
 				$e = $d;
 			}
 		}
 		else
 		{
+			#
+			# Bounds decreasing too slowly for
+			# quadratic interpolation, use bisection.
+			#
 			$d = $xm;
 			$e = $d;
 		}
@@ -460,16 +521,45 @@ sub brentzero
 		#
 		# Move last best guess to $a.
 		#
-		# $xm check had been for > 0, but the copysign() call
-		# works because we would have already returned if $xm
-		# was zero.
-		#
 		$a = $b;
 		$fa = $fb;
+
+		#
+		# Calculate the next guess.
+		#
 		$b += (abs($d) > $tol1)? $d: copysign($tol1, $xm);
 		$fb = &$func($b);
+		$iter++;
 	}
-	carp "Exceded $ITER iterations.";
+
+	carp "Brentzero Exceed Maximum Iterations.\n" if ($iter >= $ITMAX);
+	return $a;
 }
 
 1;
+__END__
+
+=pod
+
+=head1 BUGS
+
+Please report any bugs or feature requests via Github's L<issues link|:q>
+
+=head1 AUTHOR
+
+John A.R. Williams B<J.A.R.Williams@aston.ac.uk>
+
+John M. Gamble B<jgamble@cpan.org> (current maintainer)
+
+=head1 SEE ALSO
+
+"Numerical Recipies: The Art of Scientific Computing"
+W.H. Press, B.P. Flannery, S.A. Teukolsky, W.T. Vetterling.
+Cambridge University Press. ISBN 0 521 30811 9.
+
+Richard P. Brent, L<Algorithms for Minimization Without Derivatives|http://www.worldcat.org/title/algorithms-for-minimization-without-derivatives/oclc/515987&referer=brief_results>
+
+Professor (Emeritus) Richard Brent has a web page at
+L<http://maths-people.anu.edu.au/~brent/>
+
+=cut
