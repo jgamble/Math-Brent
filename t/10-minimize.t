@@ -1,7 +1,7 @@
 use Test::More tests => 5;
 
 use Math::Brent qw(Minimise1D);
-use Math::Utils(:compare);
+use Math::Utils qw(:compare);
 use strict;
 use warnings;
 
