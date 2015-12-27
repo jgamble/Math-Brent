@@ -1,13 +1,21 @@
 Revision history for Math-Brent
 
-0.5
+1.00
+	26 December 2015
+	- Include Van Wijngaarden-Dekker-Brent method for finding zeros
+	  of an function. 
+	- Of course add a test file for that.
+	- PODify the subs instead of putting all documentation on top. Clean
+	  up the POD and the examples.
+
+0.05
 	14 September 2015
 	- Replace Math::Fortran use with Math::Utils. Changed calls
 	  to Math::Fortran's sign() to Math::Utils's copysign().
 	- Upped the minimum perl version needed to 5.10.1. This
 	  also allows use of the //= operator.
 
-0.4
+0.04
 	7 August 2015
 	- De-Fortran some code, including the elimination of one
 	  of the goto statements.
