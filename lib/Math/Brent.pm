@@ -17,7 +17,7 @@ our (@ISA, @EXPORT_OK, %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
-our $VERSION = 0.05;
+our $VERSION = 1.00;
 
 use Math::VecStat qw(max min);
 use Math::Utils qw(:fortran);
@@ -26,7 +26,7 @@ use Carp;
 
 =head1 NAME
 
-Math::Brent - Brent's Single Dimensional Function Minimisation, and Brent's zero finder.
+Math::Brent - Brent's single dimensional function minimisation, and Brent's zero finder.
 
 =head1 SYNOPSIS
 
@@ -48,9 +48,12 @@ or
 
     use Math::Brent qw(BracketMinimum Brent);
 
+    my $tolerance = 1e-7;
+    my $itmax = 80;
+
     #
-    # If for some reason you want to use the separate function
-    # calls instead of one call to Minimise1D()
+    # If you want to use the separate functions
+    # instead of a single call to Minimise1D().
     #
     my($ax, $bx, $cx, $fa, $fb, $fc) = BracketMinimum($ax, $bx, \&sinc);
     my($x, $y) = Brent($ax, $bx, $cx, \&sinc, $tolerance, $itmax);
@@ -71,8 +74,14 @@ Anonymous subroutines may also be used as the function reference:
     my($x, $y) = Minimise1D(3, 1, $cubic_ref);
     print "Minimum of the cubic at $x = $y\n";
 
-In addition to finding the minimum, there is also an implementation of
-Brent's Method, used to find a function's root without using derivatives.
+In addition to finding the minimum, there is also an implementation of the
+Van Wijngaarden-Dekker-Brent Method, used to find a function's root without
+using derivatives.
+
+    use Math::Brent qw(Brentzero);
+
+    my $tolerance = 1e-7;
+    my $itmax = 80;
 
     sub wobble
     {
@@ -81,10 +90,9 @@ Brent's Method, used to find a function's root without using derivatives.
     }
 
     #
-    # Find the zero between .5 and 1.
+    # Find the zero somewhere between .5 and 1.
     #
     $r = Brentzero(0.5, 1.0, \&wobble, $tolerance, $itmax);
-
 
 =head1 EXPORT
 
@@ -144,6 +152,8 @@ and B<$bx>, this routine searches in the downhill direction and returns
 a list of the three points B<$ax>, B<$bx>, B<$cx> which bracket the
 minimum of the function, along with the function values at those three
 points, $fa, $fb, $fc.
+
+The points B<$ax>, B<$bx>, B<$cx> may then be used in the function Brent().
 
 =cut
 
@@ -385,7 +395,7 @@ sub Brentzero
 	my $fa = &$func($a);
 	my $fb = &$func($b);
 
-	if ($fa * $fb > 0.0)
+	if (($fa > 0.0 and $fb > 0.0) or ($fa < 0.0 and $fb < 0.0))
 	{
 		carp "Brentzero(): root was not bracketed by [$a, $b].";
 		return undef;
@@ -543,7 +553,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests via Github's L<issues link|:q>
+Please report any bugs or feature requests via Github's
+L<issues link|https://github.com/jgamble/Math-Brent/issues>
 
 =head1 AUTHOR
 
