@@ -1,7 +1,8 @@
-	Math-Brent, version 0.05, 14 September 2015
+	Math-Brent, version 1.00, 26 December 2015
 
 An implementation of Brent's method for one-dimensional minimisation
-of a function without using derivatives.
+of a function without using derivatives, and an implementation of the
+Van Wijngaarden-Dekker-Brent Method, used to find a function's root.
 
 INSTALLATION
 
