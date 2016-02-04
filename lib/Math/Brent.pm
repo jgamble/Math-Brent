@@ -389,6 +389,30 @@ sub Brent
     return ($x, $fx);
 }
 
+=head3 Brentzero()
+
+Find the zero of a function without using derivatives, using the Van Wijngaarden-Dekker-Brent method.
+
+    use Math::Brent qw(Brentzero);
+    use Math::Utils qw(:polynomial);
+
+    my $tolerance = 1e-7;
+    my $itmax = 80;
+
+    sub sumfourths
+    {
+        my($t) = @_;
+        return pl_evaluate([0, -1, 0, 10, 15, 6], $t) / 30;
+    }
+
+    #
+    # Find the zero somewhere between .5 and 1.
+    #
+    $r = Brentzero(-0.25, -1.0, \&sumfourths, $tolerance, $itmax);
+
+
+=cut
+
 sub Brentzero
 {
 	my($a, $b, $func, $tol, $ITMAX) = @_;
